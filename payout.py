@@ -10,11 +10,9 @@
 from tabulate import tabulate
 import Currency
 import GraphQL
-import Mongo
 import os
 import math
 
-client = Mongo.Mongo()
 
 ################################################################
 # Define the payout calculation here
@@ -26,7 +24,6 @@ fee = 0.025  # The fee percentage to charge
 min_height = 15107  # This can be the last known payout or this could vary the query to be a starting date
 max_height = 20000
 confirmations = 18  # Can set this to any value for min confirmations up to `k`. 15 is recommended.
-store = False  # Do we want to store this
 
 # Determine the ledger hash from GraphQL. As we know the staking epoch we can get any block in the epoch
 try:
@@ -85,12 +82,10 @@ if not staking_ledger["data"]["stakes"]:
 for s in staking_ledger["data"]["stakes"]:
 
     # Clean up timed weighting, if no timing info, then the wallet is unlocked;
-    if not s["timing"]:
-        # print(f"wallet {s['public_key']} is unlocked!")
+    if not s["timing"]:  # wallet unlocked
         timed_weighting = 1
     else:
-        print(f'wallet {s["public_key"]} is locked!')
-        timed_weighting = s["timing"]["timed_weighting"]
+        timed_weighting = s["timing"]["timed_weighting"]  # wallet is locked
 
     # only include in the payout addresses if it is unlocked
     if timed_weighting:
@@ -116,14 +111,12 @@ for s in staking_ledger["data"]["stakes"]:
 assert (total_unlocked_staking_balance <= total_staking_balance)
 
 # print the information of total and unlocked staking accounts and tokens
-staking_info = f"The pool's total staking balance is: {total_staking_balance}. "
+staking_info = f"\nThe pool's total staking balance is: {total_staking_balance}. \n"
 if len(locked_accounts) > 0:
-    staking_info += f"However, only {total_unlocked_staking_balance} of it is unlocked, "
+    staking_info += f"However, only {total_unlocked_staking_balance} of it is unlocked, \n"
 else:
-    staking_info += f"All of the tokens are unlocked, "
-
-# Who are we going to pay?
-staking_info += f"and the block rewards are shared by these {len(payouts)} unlocked accounts."
+    staking_info += f"All of the tokens are unlocked, \n"
+staking_info += f"and the block rewards are shared by the {len(payouts)} unlocked accounts.\n"
 print(staking_info)
 
 try:
@@ -137,9 +130,7 @@ except Exception as e:
     print(e)
     exit("Issue getting blocks from GraphQL")
 
-# #DEBUG
-# # print(blocks)
-#
+
 if not blocks["data"]["blocks"]:
     exit("Nothing to payout as we didn't win anything")
 
@@ -147,10 +138,6 @@ if not blocks["data"]["blocks"]:
 # Start of blocks loop
 ################################################################
 for b in blocks["data"]["blocks"]:
-
-    # # Keep track of payouts per block
-    # foundation_payouts = 0
-    # other_payouts = 0
 
     # This will always be defined except when it is not...
     if not b["transactions"]["coinbaseReceiverAccount"]:
@@ -203,8 +190,6 @@ for b in blocks["data"]["blocks"]:
         fee_transfer_to_snarkers, fee_transfer_for_coinbase
     ])
 
-    # print(total_fee_transfers_to_creator,fee_transfer_to_snarkers,fee_transfer_for_coinbase)
-
     # We calculate rewards multiple ways to sense check
     assert (total_rewards == total_rewards_prev_method)
 
@@ -213,65 +198,7 @@ for b in blocks["data"]["blocks"]:
     all_blocks_total_rewards += total_rewards
     all_blocks_total_fees += total_fees
 
-#
-#     #######################################################
-#     # Determine the amount we need to pay the Foundation
-#     # This algorithm is according to the published rules
-#     # We don't need to account for supercharged rewards or
-#     # share the transaction fees, so this is **good** for the pool
-#     # as we share all these rewards. We first work out the Foundation
-#     # payments and then subtract from the total rewards before sharing
-#     # the remainder among the pool
-#     #######################################################
-#
-    # for p in payouts:
-#
-#         if p["foundation_delegation"]:
-#
-#             # Only pay foundation a % of the normal coinbase
-#             # Round down to the nearest nanomina
-#             foundation_block_total = math.floor(
-#                 (p["staking_balance"] / total_staking_balance) * coinbase *
-#                 (1 - fee))
-#
-#             p["total"] += foundation_block_total
-#
-#             store_payout.append({
-#                 "publicKey": p["publicKey"],
-#                 "blockHeight": b["blockHeight"],
-#                 "stateHash": b["stateHash"],
-#                 "totalPoolStakes": total_staking_balance,
-#                 "stakingBalance": p["staking_balance"],
-#                 "dateTime": b["dateTime"],
-#                 "coinbase": int(b["transactions"]["coinbase"]),
-#                 "totalRewards": total_rewards,
-#                 "payout": foundation_block_total,
-#                 "epoch": staking_epoch,
-#                 "ledgerHash": ledger_hash,
-#                 "foundation": True
-#             })
-#
-#             # Track all the Foundation payouts
-#             foundation_payouts += foundation_block_total
-#         else:
-#             # # This was a non foundation address
-#             # # So calculate this the other way
-#             # supercharged_contribution = (
-#             #     (supercharged_weighting - 1) * p["timed_weighting"]) + 1
-#             # effective_stake = p["staking_balance"] * supercharged_contribution
-#             # # This the effective percentage of the pool disregarding the Foundation element
-#             # effective_pool_stakes[p["publicKey"]] = effective_stake
-#             # sum_effective_pool_stakes += effective_stake
-#
-#     # Check here the balances make sense
-#     assert (foundation_payouts <= total_rewards)
-#
-#     # assert (sum_effective_pool_stakes <= 2 * total_staking_balance)
-#
-#     # What are the remaining rewards we can share? This should always be higher than if we don't share.
-#     block_pool_share = total_rewards - (foundation_payouts / (1 - fee))
-#
-    # Determine the effective pool weighting based on sum of effective stakes
+    # Determine the pool weighting based on sum of stakes of UNLOCKED accounts
     for p in payouts:
         effective_pool_weighting = p["staking_balance"] / total_unlocked_staking_balance
 
@@ -311,23 +238,8 @@ for b in blocks["data"]["blocks"]:
             "ledgerHash":
             ledger_hash
         })
-#
-#     # Final check
-#     # These are essentially the same but we allow for a tiny bit of nanomina rounding and worst case we never pay more
-#     assert (foundation_payouts + other_payouts + total_fees <= total_rewards)
-#
-# # Store the payouts here so we can generate transactions
-# if store:
-#
-#     if not os.getenv('MONGO_URI'):
-#         exit("No Mongo connection string provided")
-#
-#     try:
-#         post_id = client.collection.insert_many(store_payout)
-#     except Exception as e:
-#         print(e)
-#         exit("There was an issue storing a payout")
-#
+
+
 ################################################################
 # Print some helpful data to the screen
 ################################################################
@@ -343,17 +255,17 @@ print(
              ],
              tablefmt="pretty"))
 
-print(f"We are paying out {all_blocks_total_rewards} nanomina in this window.")
+print(f"We have received grand total of "
+      f"{Currency.Currency(all_blocks_total_rewards,format=Currency.CurrencyFormat.NANO).decimal_format()} "
+      f"mina in this window. ")
 
-print("That is " +
-      Currency.Currency(all_blocks_total_rewards,
-                        format=Currency.CurrencyFormat.NANO).decimal_format() +
-      " mina")
-
-print("Our fee is " +
+print("Our fee at 2.5% is " +
       Currency.Currency(all_blocks_total_fees,
                         format=Currency.CurrencyFormat.NANO).decimal_format() +
-      " mina")
+      " mina, and the total payout amount is " +
+      Currency.Currency(all_blocks_total_rewards-all_blocks_total_fees,
+                        format=Currency.CurrencyFormat.NANO).decimal_format()
+      )
 
 payout_table = []
 payout_json = []
@@ -363,7 +275,7 @@ for p in payouts:
         p["publicKey"],
         Currency.Currency(
             p["staking_balance"],
-            format=Currency.CurrencyFormat.WHOLE).decimal_format(), p["total"],
+            format=Currency.CurrencyFormat.WHOLE).decimal_format(), True, p["total"],
         Currency.Currency(
             p["total"], format=Currency.CurrencyFormat.NANO).decimal_format(),
     ])
@@ -375,7 +287,7 @@ for p in locked_accounts:
         p["publicKey"],
         Currency.Currency(
             p["staking_balance"],
-            format=Currency.CurrencyFormat.WHOLE).decimal_format(), p["total"],
+            format=Currency.CurrencyFormat.WHOLE).decimal_format(), False, p["total"],
         Currency.Currency(
             p["total"], format=Currency.CurrencyFormat.NANO).decimal_format(),
     ])
@@ -383,7 +295,7 @@ for p in locked_accounts:
 print(
     tabulate(payout_table,
              headers=[
-                 "PublicKey", "Staking Balance", "Payout nanomina",
+                 "PublicKey", "Staking Balance", "Unlocked?", "Payout nanomina",
                  "Payout mina", "Foundation"
              ],
              tablefmt="pretty"))
