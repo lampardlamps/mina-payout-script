@@ -1,12 +1,6 @@
-## MinaExplorer Payout Script
+## Supercharged Pool Payout Script
 
-This implementation relies on data from minaexplorer.com. A more generally applicable version that takes in a staking ledger and uses the archive node is available here https://github.com/jrwashburn/mina-pool-payout and is **strongly** recommended. The algorithms slightly differ so the outputs from both scripts may not be exactly equal but should be close enough to compare.
-
-THIS WILL NOT CALCULATE THE FOUNDATION SHARE CORRECTLY IF YOU HAVE A FEE DIFFERENT THAN 5%
-
-This is a proof of concept implementation of this [staking calculation](https://docs.minaexplorer.com/minaexplorer/calculating-payments).
-
-To run, change the settings to your requirements in `payout.py` specifying at least a public key and ledger hash. It will only work for one epoch at a time. It uses a fee of 5% but update if yours is different.
+This is a fork of Minaexplorer's script: https://github.com/garethtdavies/mina-payout-script. The main purpose of this script is to implement the payout logic of the supercharged pool: any wallet with locked tokens will NOT be paid, and all the rewards are shared with the wallets with ONLY unlocked tokens. 
 
 ```
 pip3 install -r requirements.txt
