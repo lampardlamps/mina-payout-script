@@ -19,10 +19,10 @@ client = Mongo.Mongo()
 ################################################################
 # Define the payout calculation here
 ################################################################
-public_key = "B62qpge4uMq4Vv5Rvc8Gw9qSquUYd6xoW1pz7HQkMSHm6h1o7pvLPAN"  # Public key of the block producer
-staking_epoch = 2  # To ensure we only get blocks from the current staking epoch as the ledger may be different
+public_key = "B62qpJavug1VGCBSttepmXr6nh8fvXY5SigbN44ttYDia65vwbTEcq2"  # Public key of the block producer
+staking_epoch = 3  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
-fee = 0.05  # The fee percentage to charge
+fee = 0.025  # The fee percentage to charge
 min_height = 0  # This can be the last known payout or this could vary the query to be a starting date
 confirmations = 15  # Can set this to any value for min confirmations up to `k`. 15 is recommended.
 store = False  # Do we want to store this
