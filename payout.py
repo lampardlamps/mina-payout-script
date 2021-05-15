@@ -26,12 +26,7 @@ fee = 0.025  # The fee percentage to charge
 min_height = 0  # This can be the last known payout or this could vary the query to be a starting date
 confirmations = 15  # Can set this to any value for min confirmations up to `k`. 15 is recommended.
 store = False  # Do we want to store this
-foundation_delegations = [
-    "B62qmsYXFNNE565yv7bEMPsPnpRCsMErf7J2v5jMnuKQ1jgwZS8BzXS",
-    "B62qn71s63yywMUCcFhP4iCata7HpgyrvmGjpKa1D9544vGW6FBZ6a1",
-    "B62qqEV4oP7w2jLQGckvZzdWjfdLKySKHJ3tNU5niRjpPD7beYumWTB",
-    "B62qmQAFPta1Q3c7wXHxXRKnE3uWyBYZCLb8frdHEgavi3BbBVkpeC1"
-]  # Could determine this from an API / predefined list but hardcoded for development
+foundation_delegations = []  # Could determine this from an API / predefined list but hardcoded for development
 coinbase = 720000000000  # Later we can set this dynamically - this is because we don't care about supercharged for Foundation
 
 # Determine the ledger hash from GraphQL. As we know the staking epoch we can get any block in the epoch
@@ -89,10 +84,11 @@ if not staking_ledger["data"]["stakes"]:
 
 for s in staking_ledger["data"]["stakes"]:
 
-    # Clean up timed weighting if no timing info as then they are untimed
+    # Clean up timed weighting, if no timing info, then the wallet is unlocked;
     if not s["timing"]:
         timed_weighting = 1
     else:
+        print(f"wallet {s["public_key"]} is locked!")
         timed_weighting = s["timing"]["timed_weighting"]
 
     # Is this a Foundation address
