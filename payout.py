@@ -213,7 +213,7 @@ for b in blocks["data"]["blocks"]:
     all_blocks_total_rewards += total_rewards
     all_blocks_total_fees += total_fees
 
-print(f"all blocks total rewards {all_blocks_total_rewards} and total fees {all_blocks_total_fees}")
+# print(f"all blocks total rewards {all_blocks_total_rewards} and total fees {all_blocks_total_fees}")
 #
 #     #######################################################
 #     # Determine the amount we need to pay the Foundation
