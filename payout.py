@@ -301,4 +301,4 @@ print(
              tablefmt="pretty"))
 
 # TIf you want, output the payout json to take to the next stage to sign or use output from table above
-#print(payout_json)
+print(payout_json)
