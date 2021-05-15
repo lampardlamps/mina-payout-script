@@ -86,10 +86,10 @@ for s in staking_ledger["data"]["stakes"]:
 
     # Clean up timed weighting, if no timing info, then the wallet is unlocked;
     if not s["timing"]:
-        print(f"wallet {s['public_key']} is unlocked!")
+        # print(f"wallet {s['public_key']} is unlocked!")
         timed_weighting = 1
     else:
-        print(f'wallet {s["public_key"]} is locked! timed_weighting={s["timing"]["timed_weighting"]}')
+        print(f'wallet {s["public_key"]} is locked!')
         timed_weighting = s["timing"]["timed_weighting"]
 
     # only include in the payout addresses if it is unlocked
@@ -120,114 +120,100 @@ staking_info = f"The pool's total staking balance is: {total_staking_balance}. "
 if len(locked_account) > 0:
     staking_info += f"However, only {total_unlocked_staking_balance} of it is unlocked, "
 else:
-    staking_info += f"All of it is unlocked, "
-staking_info += f"and the block rewards are shared by these {len(payouts)} addresses."
-print(staking_info)
-
-# print(
-#     f"The Foundation delegation balance is: {total_staking_balance_foundation}"
-# )
+    staking_info += f"All of the tokens are unlocked, "
 
 # Who are we going to pay?
-# print(f"There are {len(payouts)} delegates in the pool")
-#
-# try:
-#     blocks = GraphQL.getBlocks({
-#         "creator": public_key,
-#         "epoch": staking_epoch,
-#         "blockHeightMin": min_height,
-#         "blockHeightMax": max_height,
-#     })
-# except Exception as e:
-#     print(e)
-#     exit("Issue getting blocks from GraphQL")
-#
+staking_info += f"and the block rewards are shared by these {len(payouts)} unlocked accounts."
+print(staking_info)
+
+try:
+    blocks = GraphQL.getBlocks({
+        "creator": public_key,
+        "epoch": staking_epoch,
+        "blockHeightMin": min_height,
+        "blockHeightMax": max_height,
+    })
+except Exception as e:
+    print(e)
+    exit("Issue getting blocks from GraphQL")
+
 # #DEBUG
 # # print(blocks)
 #
-# if not blocks["data"]["blocks"]:
-#     exit("Nothing to payout as we didn't win anything")
-#
-# ################################################################
-# # Start of blocks loop
-# ################################################################
-# for b in blocks["data"]["blocks"]:
-#
-#     # Keep track of payouts per block
-#     foundation_payouts = 0
-#     other_payouts = 0
-#
-#     # This will always be defined except when it is not...
-#     if not b["transactions"]["coinbaseReceiverAccount"]:
-#         print(
-#             f"{b['blockHeight']} didn't have a coinbase so won it but no rewards."
-#         )
-#         break
-#
-#     coinbase_receiver = b["transactions"]["coinbaseReceiverAccount"][
-#         "publicKey"]
-#
-#     # # This is to keep track of non-Foundation delegates
-#     # sum_effective_pool_stakes = 0
-#     # effective_pool_stakes = {}
-#
-#     ####################################
-#     # FEE TRANSFERS
-#     ####################################
-#     fee_transfers = list(
-#         filter(lambda d: d['type'] == "Fee_transfer",
-#                b["transactions"]["feeTransfer"]))
-#
-#     fee_transfers_by_coinbase = list(
-#         filter(lambda d: d['type'] == "Fee_transfer_via_coinbase",
-#                b["transactions"]["feeTransfer"]))
-#
-#     total_fee_transfers = sum(int(item['fee']) for item in fee_transfers)
-#     # Note there can be more than 1 coinbase
-#     fee_transfer_for_coinbase = sum(
-#         int(item['fee']) for item in fee_transfers_by_coinbase)
-#
-#     # Sum all the fee transfers to this account with type of fee_transfer - these are the tx fees
-#     fee_transfer_to_creator = list(
-#         filter(lambda d: d['recipient'] == coinbase_receiver, fee_transfers))
-#     total_fee_transfers_to_creator = sum(
-#         int(item['fee']) for item in fee_transfer_to_creator)
-#
-#     # Sum all the fee transfers not to this account with type of fee_transfer - this is snark work for the included tx
-#     fee_transfer_to_snarkers = total_fee_transfers - total_fee_transfers_to_creator
-#
-#     # Determine the supercharged weighting for the block
-#
-#     # # New way uses fee transfers so we share the resulting profitability of the tx and take into account the coinbase snark
-#     # supercharged_weighting = 1 + (1 / (
-#     #     1 + int(total_fee_transfers_to_creator) /
-#     #     (int(b["transactions"]["coinbase"]) - int(fee_transfer_for_coinbase))))
-#
-#     # What are the rewards for the block - this is how we used to calculate it
-#     # this serves as a sense check currently to check logic
-#     total_rewards_prev_method = int(b["transactions"]["coinbase"]) + int(
-#         b["txFees"]) - int(b["snarkFees"])
-#
-#     # Can also define this via fee transfers
-#     total_rewards = int(
-#         b["transactions"]["coinbase"]
-#     ) + total_fee_transfers_to_creator - fee_transfer_for_coinbase
-#
-#     blocks_table.append([
-#         b['blockHeight'], #supercharged_weighting,
-#         b["transactions"]["coinbase"], total_fee_transfers_to_creator,
-#         fee_transfer_to_snarkers, fee_transfer_for_coinbase
-#     ])
-#
-#     #print(total_fee_transfers_to_creator,fee_transfer_to_snarkers,fee_transfer_for_coinbase)
-#
-#     # We calculate rewards multiple ways to sense check
-#     assert (total_rewards == total_rewards_prev_method)
-#
-#     total_fees = int(fee * total_rewards)
-#
-#     all_blocks_total_rewards += total_rewards
-#     all_blocks_total_fees += total_fees
+if not blocks["data"]["blocks"]:
+    exit("Nothing to payout as we didn't win anything")
+
+################################################################
+# Start of blocks loop
+################################################################
+for b in blocks["data"]["blocks"]:
+
+    # # Keep track of payouts per block
+    # foundation_payouts = 0
+    # other_payouts = 0
+
+    # This will always be defined except when it is not...
+    if not b["transactions"]["coinbaseReceiverAccount"]:
+        print(
+            f"{b['blockHeight']} didn't have a coinbase so won it but no rewards."
+        )
+        break
+
+    coinbase_receiver = b["transactions"]["coinbaseReceiverAccount"][
+        "publicKey"]
+
+    ####################################
+    # FEE TRANSFERS
+    ####################################
+    fee_transfers = list(
+        filter(lambda d: d['type'] == "Fee_transfer",
+               b["transactions"]["feeTransfer"]))
+
+    fee_transfers_by_coinbase = list(
+        filter(lambda d: d['type'] == "Fee_transfer_via_coinbase",
+               b["transactions"]["feeTransfer"]))
+
+    total_fee_transfers = sum(int(item['fee']) for item in fee_transfers)
+    # Note there can be more than 1 coinbase
+    fee_transfer_for_coinbase = sum(
+        int(item['fee']) for item in fee_transfers_by_coinbase)
+
+    # Sum all the fee transfers to this account with type of fee_transfer - these are the tx fees
+    fee_transfer_to_creator = list(
+        filter(lambda d: d['recipient'] == coinbase_receiver, fee_transfers))
+    total_fee_transfers_to_creator = sum(
+        int(item['fee']) for item in fee_transfer_to_creator)
+
+    # Sum all the fee transfers not to this account with type of fee_transfer - this is snark work for the included tx
+    fee_transfer_to_snarkers = total_fee_transfers - total_fee_transfers_to_creator
+
+    # What are the rewards for the block - this is how we used to calculate it
+    # this serves as a sense check currently to check logic
+    total_rewards_prev_method = int(b["transactions"]["coinbase"]) + int(
+        b["txFees"]) - int(b["snarkFees"])
+
+    # Can also define this via fee transfers
+    total_rewards = int(
+        b["transactions"]["coinbase"]
+    ) + total_fee_transfers_to_creator - fee_transfer_for_coinbase
+
+    blocks_table.append([
+        b['blockHeight'],
+        b["transactions"]["coinbase"], total_fee_transfers_to_creator,
+        fee_transfer_to_snarkers, fee_transfer_for_coinbase
+    ])
+
+    # print(total_fee_transfers_to_creator,fee_transfer_to_snarkers,fee_transfer_for_coinbase)
+
+    # We calculate rewards multiple ways to sense check
+    assert (total_rewards == total_rewards_prev_method)
+
+    total_fees = int(fee * total_rewards)
+
+    all_blocks_total_rewards += total_rewards
+    all_blocks_total_fees += total_fees
+
+print(f"all blocks total rewards {all_blocks_total_rewards} and total fees {all_blocks_total_fees}")
 #
 #     #######################################################
 #     # Determine the amount we need to pay the Foundation
