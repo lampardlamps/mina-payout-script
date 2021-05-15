@@ -62,7 +62,7 @@ print(
 # Initialize variables
 total_staking_balance = 0
 total_unlocked_staking_balance = 0
-locked_account = []
+locked_accounts = []
 payouts = []
 all_blocks_total_rewards = 0
 all_blocks_total_fees = 0
@@ -104,7 +104,7 @@ for s in staking_ledger["data"]["stakes"]:
         # Sum the total of the pool
         total_unlocked_staking_balance += s["balance"]
     else:
-        locked_account.append({
+        locked_accounts.append({
             "publicKey": s["public_key"],
             "total": 0,
             "staking_balance": s["balance"],
@@ -117,7 +117,7 @@ assert (total_unlocked_staking_balance <= total_staking_balance)
 
 # print the information of total and unlocked staking accounts and tokens
 staking_info = f"The pool's total staking balance is: {total_staking_balance}. "
-if len(locked_account) > 0:
+if len(locked_accounts) > 0:
     staking_info += f"However, only {total_unlocked_staking_balance} of it is unlocked, "
 else:
     staking_info += f"All of the tokens are unlocked, "
@@ -213,7 +213,6 @@ for b in blocks["data"]["blocks"]:
     all_blocks_total_rewards += total_rewards
     all_blocks_total_fees += total_fees
 
-# print(f"all blocks total rewards {all_blocks_total_rewards} and total fees {all_blocks_total_fees}")
 #
 #     #######################################################
 #     # Determine the amount we need to pay the Foundation
@@ -225,7 +224,7 @@ for b in blocks["data"]["blocks"]:
 #     # the remainder among the pool
 #     #######################################################
 #
-#     for p in payouts:
+    # for p in payouts:
 #
 #         if p["foundation_delegation"]:
 #
@@ -272,56 +271,46 @@ for b in blocks["data"]["blocks"]:
 #     # What are the remaining rewards we can share? This should always be higher than if we don't share.
 #     block_pool_share = total_rewards - (foundation_payouts / (1 - fee))
 #
-#     # Determine the effective pool weighting based on sum of effective stakes
-#     for p in payouts:
-#         if not p["foundation_delegation"]:
-#             effective_pool_weighting = effective_pool_stakes[
-#                 p["publicKey"]] / sum_effective_pool_stakes
-#
-#             #This must be less than 1 or we have a major issue
-#             assert effective_pool_weighting <= 1
-#
-#             block_total = math.floor(block_pool_share *
-#                                      effective_pool_weighting * (1 - fee))
-#             p["total"] += block_total
-#
-#             other_payouts += block_total
-#
-#             # Store this data in a structured format for later querying and for the payment script, handled seperately
-#             store_payout.append({
-#                 "publicKey":
-#                 p["publicKey"],
-#                 "blockHeight":
-#                 b["blockHeight"],
-#                 "stateHash":
-#                 b["stateHash"],
-#                 "totalPoolStakes":
-#                 total_staking_balance,
-#                 "effectivePoolWeighting":
-#                 effective_pool_weighting,
-#                 "effectivePoolStakes":
-#                 effective_pool_stakes[p["publicKey"]],
-#                 "superchargedContribution":
-#                 supercharged_contribution,
-#                 "stakingBalance":
-#                 p["staking_balance"],
-#                 "sumEffectivePoolStakes":
-#                 sum_effective_pool_stakes,
-#                 "superChargedWeighting":
-#                 supercharged_weighting,
-#                 "dateTime":
-#                 b["dateTime"],
-#                 "coinbase":
-#                 int(b["transactions"]["coinbase"]),
-#                 "totalRewards":
-#                 total_rewards,
-#                 "payout":
-#                 block_total,
-#                 "epoch":
-#                 staking_epoch,
-#                 "ledgerHash":
-#                 ledger_hash
-#             })
+    # Determine the effective pool weighting based on sum of effective stakes
+    for p in payouts:
+        effective_pool_weighting = p["staking_balance"] / total_unlocked_staking_balance
+
+        # This must be less than 1 or we have a major issue
+        assert effective_pool_weighting <= 1
+
+        block_total = math.floor(total_rewards *
+                                 effective_pool_weighting * (1 - fee))
+        p["total"] += block_total
+
+        # Store this data in a structured format for later querying and for the payment script, handled seperately
+        store_payout.append({
+            "publicKey":
+            p["publicKey"],
+            "blockHeight":
+            b["blockHeight"],
+            "stateHash":
+            b["stateHash"],
+            "totalPoolStakes":
+            total_staking_balance,
+            "effectivePoolWeighting":
+            effective_pool_weighting,
+            "effectivePoolStakes":
+            p["staking_balance"],
+            "stakingBalance":
+            p["staking_balance"],
+            "dateTime":
+            b["dateTime"],
+            "coinbase":
+            int(b["transactions"]["coinbase"]),
+            "totalRewards":
+            total_rewards,
+            "payout":
+            block_total,
+            "epoch":
+            staking_epoch,
+            "ledgerHash":
+            ledger_hash
+        })
 #
 #     # Final check
 #     # These are essentially the same but we allow for a tiny bit of nanomina rounding and worst case we never pay more
@@ -339,56 +328,65 @@ for b in blocks["data"]["blocks"]:
 #         print(e)
 #         exit("There was an issue storing a payout")
 #
-# ################################################################
-# # Print some helpful data to the screen
-# ################################################################
-#
-# print(f"We won these {len(blocks_table)} blocks:")
-#
-# print(
-#     tabulate(blocks_table,
-#              headers=[
-#                  "BlockHeight", "Supercharged Weighting", "Coinbase",
-#                  "Producer Fee Transfers", "Snark Fee Transfers",
-#                  "Coinbase Fee Transfers"
-#              ],
-#              tablefmt="pretty"))
-#
-# print(f"We are paying out {all_blocks_total_rewards} nanomina in this window.")
-#
-# print("That is " +
-#       Currency.Currency(all_blocks_total_rewards,
-#                         format=Currency.CurrencyFormat.NANO).decimal_format() +
-#       " mina")
-#
-# print("Our fee is " +
-#       Currency.Currency(all_blocks_total_fees,
-#                         format=Currency.CurrencyFormat.NANO).decimal_format() +
-#       " mina")
-#
-# payout_table = []
-# payout_json = []
-#
-# for p in payouts:
-#     payout_table.append([
-#         p["publicKey"],
-#         Currency.Currency(
-#             p["staking_balance"],
-#             format=Currency.CurrencyFormat.WHOLE).decimal_format(), p["total"],
-#         Currency.Currency(
-#             p["total"], format=Currency.CurrencyFormat.NANO).decimal_format(),
-#         p["foundation_delegation"]
-#     ])
-#
-#     payout_json.append({"publicKey": p["publicKey"], "total": p["total"]})
-#
-# print(
-#     tabulate(payout_table,
-#              headers=[
-#                  "PublicKey", "Staking Balance", "Payout nanomina",
-#                  "Payout mina", "Foundation"
-#              ],
-#              tablefmt="pretty"))
+################################################################
+# Print some helpful data to the screen
+################################################################
+
+print(f"We won these {len(blocks_table)} blocks:")
+
+print(
+    tabulate(blocks_table,
+             headers=[
+                 "BlockHeight", "Coinbase",
+                 "Producer Fee Transfers", "Snark Fee Transfers",
+                 "Coinbase Fee Transfers"
+             ],
+             tablefmt="pretty"))
+
+print(f"We are paying out {all_blocks_total_rewards} nanomina in this window.")
+
+print("That is " +
+      Currency.Currency(all_blocks_total_rewards,
+                        format=Currency.CurrencyFormat.NANO).decimal_format() +
+      " mina")
+
+print("Our fee is " +
+      Currency.Currency(all_blocks_total_fees,
+                        format=Currency.CurrencyFormat.NANO).decimal_format() +
+      " mina")
+
+payout_table = []
+payout_json = []
+
+for p in payouts:
+    payout_table.append([
+        p["publicKey"],
+        Currency.Currency(
+            p["staking_balance"],
+            format=Currency.CurrencyFormat.WHOLE).decimal_format(), p["total"],
+        Currency.Currency(
+            p["total"], format=Currency.CurrencyFormat.NANO).decimal_format(),
+    ])
+
+    payout_json.append({"publicKey": p["publicKey"], "total": p["total"]})
+
+for p in locked_accounts:
+    payout_table.append([
+        p["publicKey"],
+        Currency.Currency(
+            p["staking_balance"],
+            format=Currency.CurrencyFormat.WHOLE).decimal_format(), p["total"],
+        Currency.Currency(
+            p["total"], format=Currency.CurrencyFormat.NANO).decimal_format(),
+    ])
+
+print(
+    tabulate(payout_table,
+             headers=[
+                 "PublicKey", "Staking Balance", "Payout nanomina",
+                 "Payout mina", "Foundation"
+             ],
+             tablefmt="pretty"))
 
 # TIf you want, output the payout json to take to the next stage to sign or use output from table above
 #print(payout_json)
