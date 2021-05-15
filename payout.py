@@ -23,11 +23,17 @@ public_key = "B62qpJavug1VGCBSttepmXr6nh8fvXY5SigbN44ttYDia65vwbTEcq2"  # Public
 staking_epoch = 3  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
 fee = 0.025  # The fee percentage to charge
-min_height = 0  # This can be the last known payout or this could vary the query to be a starting date
-confirmations = 15  # Can set this to any value for min confirmations up to `k`. 15 is recommended.
+min_height = 15107  # This can be the last known payout or this could vary the query to be a starting date
+max_height = 20000
+confirmations = 18  # Can set this to any value for min confirmations up to `k`. 15 is recommended.
 store = False  # Do we want to store this
-foundation_delegations = []  # Could determine this from an API / predefined list but hardcoded for development
-coinbase = 720000000000  # Later we can set this dynamically - this is because we don't care about supercharged for Foundation
+foundation_delegations = [
+    # "B62qqMhtDSFToxQLzPjZ27PVtSCZR9rgUrjUDcjytWSsDZtPFiQMrnK",
+    # "B62qin1sCKU7TQbkZ6Z5ka2armpaxkJgrWSWgUmGWG2qWBTPyxtqtuL",
+    # "B62qiYiBh33hw4cVuP1RW7RVgWwFkLC2Q4DRphdHkaigQSJdneCrUAs",
+    # "B62qmSy1QA6Qbg6Pi9KwudDLFduUGt9dEFkMVuqJwzcherG2fosok6Y",
+]  # Could determine this from an API / predefined list but hardcoded for development
+# coinbase = 720000000000  # Later we can set this dynamically - this is because we don't care about supercharged for Foundation
 
 # Determine the ledger hash from GraphQL. As we know the staking epoch we can get any block in the epoch
 try:
@@ -52,7 +58,7 @@ if not latest_block:
 assert latest_block["data"]["blocks"][0]["blockHeight"] > 1
 
 # Only ever pay out confirmed blocks
-max_height = latest_block["data"]["blocks"][0]["blockHeight"] - confirmations
+max_height = min(max_height, latest_block["data"]["blocks"][0]["blockHeight"] - confirmations)
 
 assert max_height <= latest_block["data"]["blocks"][0]["blockHeight"]
 
@@ -86,9 +92,10 @@ for s in staking_ledger["data"]["stakes"]:
 
     # Clean up timed weighting, if no timing info, then the wallet is unlocked;
     if not s["timing"]:
+        print(f"wallet {s['public_key']} is unlocked!")
         timed_weighting = 1
     else:
-        print(f"wallet {s["public_key"]} is locked!")
+        print(f'wallet {s["public_key"]} is locked! timed_weighting={s["timing"]["timed_weighting"]}')
         timed_weighting = s["timing"]["timed_weighting"]
 
     # Is this a Foundation address
@@ -98,13 +105,15 @@ for s in staking_ledger["data"]["stakes"]:
     else:
         foundation_delegation = False
 
-    payouts.append({
-        "publicKey": s["public_key"],
-        "total": 0,
-        "staking_balance": s["balance"],
-        "timed_weighting": timed_weighting,
-        "foundation_delegation": foundation_delegation
-    })
+    # only include in the payout addresses if it is unlocked
+    if s["timed_weighting"]:
+        payouts.append({
+            "publicKey": s["public_key"],
+            "total": 0,
+            "staking_balance": s["balance"],
+            "timed_weighting": timed_weighting,  # timed_weighting=1 means unlocked, 0 means locked
+            "foundation_delegation": foundation_delegation
+        })
 
     # Sum the total of the pool
     total_staking_balance += s["balance"]
@@ -117,9 +126,9 @@ assert (total_staking_balance_foundation <= total_staking_balance)
 # We now know the total pool staking balance with total_staking_balance
 print(f"The pool total staking balance is: {total_staking_balance}")
 
-print(
-    f"The Foundation delegation balance is: {total_staking_balance_foundation}"
-)
+# print(
+#     f"The Foundation delegation balance is: {total_staking_balance_foundation}"
+# )
 
 # Who are we going to pay?
 print(f"There are {len(payouts)} delegates in the pool")
@@ -160,9 +169,9 @@ for b in blocks["data"]["blocks"]:
     coinbase_receiver = b["transactions"]["coinbaseReceiverAccount"][
         "publicKey"]
 
-    # This is to keep track of non-Foundation delegates
-    sum_effective_pool_stakes = 0
-    effective_pool_stakes = {}
+    # # This is to keep track of non-Foundation delegates
+    # sum_effective_pool_stakes = 0
+    # effective_pool_stakes = {}
 
     ####################################
     # FEE TRANSFERS
@@ -191,10 +200,10 @@ for b in blocks["data"]["blocks"]:
 
     # Determine the supercharged weighting for the block
 
-    # New way uses fee transfers so we share the resulting profitability of the tx and take into account the coinbase snark
-    supercharged_weighting = 1 + (1 / (
-        1 + int(total_fee_transfers_to_creator) /
-        (int(b["transactions"]["coinbase"]) - int(fee_transfer_for_coinbase))))
+    # # New way uses fee transfers so we share the resulting profitability of the tx and take into account the coinbase snark
+    # supercharged_weighting = 1 + (1 / (
+    #     1 + int(total_fee_transfers_to_creator) /
+    #     (int(b["transactions"]["coinbase"]) - int(fee_transfer_for_coinbase))))
 
     # What are the rewards for the block - this is how we used to calculate it
     # this serves as a sense check currently to check logic
@@ -207,7 +216,7 @@ for b in blocks["data"]["blocks"]:
     ) + total_fee_transfers_to_creator - fee_transfer_for_coinbase
 
     blocks_table.append([
-        b['blockHeight'], supercharged_weighting,
+        b['blockHeight'], #supercharged_weighting,
         b["transactions"]["coinbase"], total_fee_transfers_to_creator,
         fee_transfer_to_snarkers, fee_transfer_for_coinbase
     ])
@@ -262,19 +271,19 @@ for b in blocks["data"]["blocks"]:
             # Track all the Foundation payouts
             foundation_payouts += foundation_block_total
         else:
-            # This was a non foundation address
-            # So calculate this the other way
-            supercharged_contribution = (
-                (supercharged_weighting - 1) * p["timed_weighting"]) + 1
-            effective_stake = p["staking_balance"] * supercharged_contribution
-            # This the effective percentage of the pool disregarding the Foundation element
-            effective_pool_stakes[p["publicKey"]] = effective_stake
-            sum_effective_pool_stakes += effective_stake
+            # # This was a non foundation address
+            # # So calculate this the other way
+            # supercharged_contribution = (
+            #     (supercharged_weighting - 1) * p["timed_weighting"]) + 1
+            # effective_stake = p["staking_balance"] * supercharged_contribution
+            # # This the effective percentage of the pool disregarding the Foundation element
+            # effective_pool_stakes[p["publicKey"]] = effective_stake
+            # sum_effective_pool_stakes += effective_stake
 
     # Check here the balances make sense
     assert (foundation_payouts <= total_rewards)
 
-    assert (sum_effective_pool_stakes <= 2 * total_staking_balance)
+    # assert (sum_effective_pool_stakes <= 2 * total_staking_balance)
 
     # What are the remaining rewards we can share? This should always be higher than if we don't share.
     block_pool_share = total_rewards - (foundation_payouts / (1 - fee))
