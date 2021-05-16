@@ -119,6 +119,10 @@ else:
 staking_info += f"and the block rewards are shared by the {len(payouts)} unlocked accounts.\n"
 print(staking_info)
 
+################################################################
+# Get the blocks info and the total amount of rewards
+################################################################
+
 try:
     blocks = GraphQL.getBlocks({
         "creator": public_key,
@@ -134,9 +138,7 @@ except Exception as e:
 if not blocks["data"]["blocks"]:
     exit("Nothing to payout as we didn't win anything")
 
-################################################################
-# Start of blocks loop
-################################################################
+#  iteration over the blocks to calculate the rewards
 for b in blocks["data"]["blocks"]:
 
     # This will always be defined except when it is not...
@@ -194,7 +196,7 @@ for b in blocks["data"]["blocks"]:
     assert (total_rewards == total_rewards_prev_method)
 
     total_fees = int(fee * total_rewards)
-
+    # update all blocks total rewards and fees info
     all_blocks_total_rewards += total_rewards
     all_blocks_total_fees += total_fees
 
