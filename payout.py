@@ -134,7 +134,7 @@ assert (total_unlocked_staking_balance <= total_staking_balance)
 # print the information of total and unlocked staking accounts and tokens
 staking_info = f"\nThe pool's total staking balance is: {total_staking_balance}. \n"
 if len(locked_accounts) > 0:
-    staking_info += f"However, only {total_unlocked_staking_balance} of it is unlocked, \n"
+    staking_info += f"However, only {total_unlocked_staking_balance} of it is eligible, \n"
 else:
     staking_info += f"All of the tokens are unlocked, \n"
 staking_info += f"and the block rewards are shared by the {len(payouts)} accounts " \
