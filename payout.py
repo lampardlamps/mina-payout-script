@@ -30,12 +30,20 @@ no_pay_address = [  # my own addresses, no need for payment
     "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc",
     "B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H",
 ]
+# for generating payment commands
 payment_command = "mina client send-payment -amount amt -receiver rcvr -fee 0.001 -sender " \
-                  "SUPERCHARGED_POOL -memo Supercharged_pool"
+                  "$SUPERCHARGED_POOL -memo Supercharged_pool"
+
+# initiating files for records keeping
 curDate = datetime.today().strftime('%Y-%m-%d')
-fileName = os.getcwd() + '/records/'+curDate+".md"
+fileName = os.getcwd()+'/records/'+curDate+".md"
 f = open(fileName, "w")
 f.write("```\n")
+
+# payment commands
+g = open(os.getcwd()+'/records/commands.sh', "w")
+g.write("mina accounts unlock -public-key $SUPERCHARGED_POOL \n\n")
+
 # Determine the ledger hash from GraphQL. As we know the staking epoch we can get any block in the epoch
 try:
     ledger_hash = GraphQL.getLedgerHash(epoch=staking_epoch)
@@ -101,7 +109,7 @@ for s in staking_ledger["data"]["stakes"]:
         timed_weighting = s["timing"]["timed_weighting"]  # wallet is locked
 
     # only include in the payout addresses if it is unlocked
-    if timed_weighting:
+    if timed_weighting and float(s["balance"])>=0.2:
         payouts.append({
             "publicKey": s["public_key"],
             "total": 0,
@@ -356,4 +364,7 @@ f.close()
 
 for cmd in payout_commands:
     print(cmd)
+    g.write(cmd+"\n")
+    g.write("sleep 1s \n")
+g.close()
 
