@@ -38,7 +38,7 @@ payment_command = "mina client send-payment -amount amt -receiver rcvr -fee 0.00
 curDate = datetime.today().strftime('%Y-%m-%d')
 fileName = os.getcwd()+'/records/'+curDate+".md"
 f = open(fileName, "w")
-# f.write("```\n")
+f.write("```\n")
 
 # payment commands
 g = open(os.getcwd()+'/records/commands.sh', "w")
