@@ -12,6 +12,7 @@ import Currency
 import GraphQL
 import os
 import math
+from datetime import datetime
 
 
 ################################################################
@@ -31,7 +32,10 @@ no_pay_address = [  # my own addresses, no need for payment
 ]
 payment_command = "mina client send-payment -amount amt -receiver rcvr -fee 0.001 -sender " \
                   "SUPERCHARGED_POOL -memo Supercharged_pool"
-
+curDate = datetime.today().strftime('%Y-%m-%d')
+fileName = os.getcwd() + '/records/'+curDate+".md"
+f = open(fileName, "w")
+f.write("```\n")
 # Determine the ledger hash from GraphQL. As we know the staking epoch we can get any block in the epoch
 try:
     ledger_hash = GraphQL.getLedgerHash(epoch=staking_epoch)
@@ -39,6 +43,7 @@ try:
                              ["protocolState"]["consensusState"] \
                              ["stakingEpochData"]["ledger"]["hash"]
     print(f"Using ledger hash: {ledger_hash}")
+    f.write(f"Using ledger hash: {ledger_hash}\n")
 except Exception as e:
     print(e)
     exit("Issue getting ledger_hash from GraphQL")
@@ -62,6 +67,7 @@ assert max_height <= latest_block["data"]["blocks"][0]["blockHeight"]
 print(
     f"This script will payout from blocks {min_height} to {max_height} in epoch {staking_epoch}"
 )
+f.write(f"This script will payout from blocks {min_height} to {max_height} in epoch {staking_epoch}\n")
 
 # Initialize variables
 total_staking_balance = 0
@@ -125,6 +131,7 @@ else:
     staking_info += f"All of the tokens are unlocked, \n"
 staking_info += f"and the block rewards are shared by the {len(payouts)} unlocked accounts.\n"
 print(staking_info)
+f.write(staking_info+"\n")
 
 ################################################################
 # Get the blocks info and the total amount of rewards
@@ -254,6 +261,7 @@ for b in blocks["data"]["blocks"]:
 ################################################################
 
 print(f"We won these {len(blocks_table)} blocks:")
+f.write(f"We won these {len(blocks_table)} blocks:\n")
 
 print(
     tabulate(blocks_table,
@@ -263,10 +271,22 @@ print(
                  "Coinbase Fee Transfers"
              ],
              tablefmt="pretty"))
+f.write(
+    tabulate(blocks_table,
+             headers=[
+                 "BlockHeight", "Coinbase",
+                 "Producer Fee Transfers", "Snark Fee Transfers",
+                 "Coinbase Fee Transfers"
+             ],
+             tablefmt="pretty"))
+f.write("\n")
 
 print(f"We have received grand total of "
       f"{Currency.Currency(all_blocks_total_rewards,format=Currency.CurrencyFormat.NANO).decimal_format()} "
       f"mina in this window. ")
+f.write(f"\nWe have received grand total of "
+      f"{Currency.Currency(all_blocks_total_rewards,format=Currency.CurrencyFormat.NANO).decimal_format()} "
+      f"mina in this window. \n")
 
 print("Our fee at 0% is " +
       Currency.Currency(all_blocks_total_fees,
@@ -275,6 +295,14 @@ print("Our fee at 0% is " +
       Currency.Currency(all_blocks_total_rewards-all_blocks_total_fees,
                         format=Currency.CurrencyFormat.NANO).decimal_format()
       )
+
+f.write("Our fee at 0% is " +
+      Currency.Currency(all_blocks_total_fees,
+                        format=Currency.CurrencyFormat.NANO).decimal_format()+" mina, and the total payout amount is " +
+      Currency.Currency(all_blocks_total_rewards-all_blocks_total_fees,
+                        format=Currency.CurrencyFormat.NANO).decimal_format()
+      )
+f.write("\n")
 
 payout_table = []
 payout_json = []
@@ -315,8 +343,17 @@ print(
                  "Payout mina", "Foundation"
              ],
              tablefmt="pretty"))
-
+f.write(
+    tabulate(payout_table,
+             headers=[
+                 "PublicKey", "Staking Balance", "Unlocked?", "Payout nanomina",
+                 "Payout mina", "Foundation"
+             ],
+             tablefmt="pretty"))
+f.write("```")
+f.close()
 # TIf you want, output the payout json to take to the next stage to sign or use output from table above
+
 for cmd in payout_commands:
     print(cmd)
 
