@@ -138,7 +138,7 @@ if len(locked_accounts) > 0:
 else:
     staking_info += f"All of the tokens are unlocked, \n"
 staking_info += f"and the block rewards are shared by the {len(payouts)} accounts " \
-                f"that are unlocked or have enough balance.\n"
+                f"that are either unlocked or have enough balance.\n"
 print(staking_info)
 f.write(staking_info+"\n")
 
