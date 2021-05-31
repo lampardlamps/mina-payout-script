@@ -359,6 +359,7 @@ f.write(
                  "Payout mina", "Foundation"
              ],
              tablefmt="pretty"))
+f.write("\n```")
 f.close()
 # TIf you want, output the payout json to take to the next stage to sign or use output from table above
 
