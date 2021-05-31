@@ -36,7 +36,7 @@ payment_command = "mina client send-payment -amount amt -receiver rcvr -fee 0.00
 
 # initiating files for records keeping
 curDate = datetime.today().strftime('%Y-%m-%d')
-fileName = os.getcwd()+'/records/'+curDate+".md"
+fileName = os.getcwd()+f'/records/Epoch_{staking_epoch}_'+curDate+".md"
 f = open(fileName, "w")
 f.write("```\n")
 
