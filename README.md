@@ -1,6 +1,6 @@
 ## Supercharged Pool Payout Script
 
-This is a fork of Minaexplorer's script: https://github.com/garethtdavies/mina-payout-script. The main purpose of this script is to implement the payout logic of the Supercharged Pool (https://minaexplorer.com/wallet/B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc): any wallet with locked tokens will NOT be paid, and all the rewards are shared with the wallets with ONLY unlocked tokens.
+This is a fork of Minaexplorer's script: https://github.com/garethtdavies/mina-payout-script (with thanks to him!). The main purpose of this script is to implement the payout logic of the Supercharged Pool (https://minaexplorer.com/wallet/B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc): any wallet with locked tokens will NOT be paid, and all the rewards are shared with the wallets with ONLY unlocked tokens.
 
 ```
 pip3 install -r requirements.txt
