@@ -1,9 +1,9 @@
 ##############################################################################################
-# This is an implementation of the payout system for the Supercharged Pool, which is listed at
+# This is an implementation of the payout system of the Supercharged Pool, which is listed at
 # https://docs.google.com/document/d/1x_qMqKYF3WMK5GMIgSUWQ6oqKGn8-7uzd6Kd-soaGdE/edit (in English)
 # and https://docs.qq.com/doc/DRXZXUnFUcFZvcG5S (in Chinese).
 # The main logic is that all the block rewards received by the pool are shared by the wallets
-# with ONLY unlocked tokens proportional to their delegation amount; wallets with locked tokens
+# with ONLY unlocked tokens proportional to their delegation amounts; wallets with locked tokens
 # are not paid.
 ###############################################################################################
 
