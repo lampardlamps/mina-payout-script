@@ -361,8 +361,8 @@ f.write(
              tablefmt="pretty"))
 f.write("\n```")
 f.close()
-# TIf you want, output the payout json to take to the next stage to sign or use output from table above
 
+# generate payments commands to be executed elsewhere;
 for cmd in payout_commands:
     print(cmd)
     g.write(cmd+"\n")
