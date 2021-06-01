@@ -1,11 +1,11 @@
-################################################################
-# This is a POC implementation of the payout system listed at
-# https://docs.minaexplorer.com/minaexplorer/calculating-payments
-# It is not meant for production use. This will output or store the
-# payments which must then be processed seperately e.g. by signing
-# the tx using coda sdk and then broadcasting. A better implementation is
-# at https://github.com/jrwashburn/mina-pool-payout and recommended
-################################################################
+##############################################################################################
+# This is an implementation of the payout system for the Supercharged Pool, which is listed at
+# https://docs.google.com/document/d/1x_qMqKYF3WMK5GMIgSUWQ6oqKGn8-7uzd6Kd-soaGdE/edit (in English)
+# and https://docs.qq.com/doc/DRXZXUnFUcFZvcG5S (in Chinese).
+# The main logic is that all the block rewards received by the pool are shared by the wallets
+# with ONLY unlocked tokens proportional to their delegation amount; wallets with locked tokens
+# are not paid.
+###############################################################################################
 
 from tabulate import tabulate
 import Currency
