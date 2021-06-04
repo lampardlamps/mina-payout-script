@@ -16,7 +16,7 @@ from datetime import datetime
 
 
 ################################################################
-# Define the payout calculation here
+# Define the payout calculation here, need to be manually input
 ################################################################
 public_key = "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc"  # Public key of the block producer
 staking_epoch = 5  # To ensure we only get blocks from the current staking epoch as the ledger may be different
@@ -24,15 +24,18 @@ latest_block = False  # If not set will get the latest block from MinaExplorer o
 fee = 0.0  # The fee percentage to charge
 min_height = 25560  # This can be the last known payout or this could vary the query to be a starting date
 max_height = 225580
-confirmations = 18  # Can set this to any value for min confirmations up to `k`. 15 is recommended.
-
-no_pay_address = [  # my own addresses, no need for payment
+confirmations = 18  # Can set this to any value for min confirmations on the canonical chain. 15 is recommended.
+nonce = 18
+no_pay_address = [  # node runner's own addresses, no need for payment
     "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc",
     "B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H",
 ]
+
 # for generating payment commands
 payment_command = "mina client send-payment -amount amt -receiver rcvr -fee 0.001 -sender " \
-                  "$SUPERCHARGED_POOL -memo Supercharged_pool"
+                  "$SUPERCHARGED_POOL -memo Supercharged_pool -nonce "
+
+##################################################################
 
 # initiating files for records keeping
 curDate = datetime.today().strftime('%Y-%m-%d')
@@ -332,6 +335,8 @@ for p in payouts:
         cur_payment_command = payment_command.replace("amt", Currency.Currency(
             p["total"], format=Currency.CurrencyFormat.NANO).decimal_format())
         cur_payment_command = cur_payment_command.replace("rcvr", p["publicKey"])
+        cur_payment_command += f"{nonce}"
+        nonce += 1
         payout_commands.append(cur_payment_command)
         # payout_json.append({"publicKey": p["publicKey"], "total": p["total"]})
 
