@@ -25,7 +25,8 @@ fee = 0.0  # The fee percentage to charge
 min_height = 25560  # This can be the last known payout or this could vary the query to be a starting date
 max_height = 225580
 confirmations = 18  # Can set this to any value for min confirmations on the canonical chain. 15 is recommended.
-nonce = 18
+payout_address = "B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H"
+nonce = int(GraphQL.getNonce(payout_address))
 no_pay_address = [  # node runner's own addresses, no need for payment
     "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc",
     "B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H",

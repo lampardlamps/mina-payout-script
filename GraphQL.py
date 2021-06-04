@@ -125,3 +125,22 @@ def getLatestHeight():
   }
 }"""
     return _graphql_request(query)
+
+
+def getNonce(pubKey):
+    """
+    obtain the nonce of a given public key;
+    Args:
+        pubKey:
+    Returns:
+        nonce
+    """
+    queryString = 'query{account(publicKey: "place_holder") {nonce}}'
+    queryString = queryString.replace('place_holder', str(pubKey))
+    payload = {'query': queryString}
+    headers = {"Accept": "application/json"}
+    response = requests.post("https://minagraph.com/graphql",
+                             json=payload,
+                             headers=headers)
+    resp_json = response.json()
+    return resp_json['data']['account']['nonce']
