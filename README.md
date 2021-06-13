@@ -7,7 +7,7 @@ pip3 install -r requirements.txt
 python3 payout.py
 ```
 
- output:
+Example output:
 
 ```
 Using ledger hash: jxRySSfk8kJZVj46zveaToDUJUC2GtprmeK7poqWymEzB6d2Tun
