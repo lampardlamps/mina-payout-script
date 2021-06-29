@@ -46,7 +46,9 @@ f.write("```\n")
 
 # payment commands
 g = open(os.getcwd()+'/records/commands.sh', "w")
-g.write("mina accounts unlock -public-key $SUPERCHARGED_POOL \n\n")
+g.write("mina accounts import -privkey-path ~/cb_keys/my-wallet\n\n"
+        "export SUPERCHARGED_POOL=B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H\n\n"
+        "mina accounts unlock -public-key $SUPERCHARGED_POOL \n\n")
 
 # Determine the ledger hash from GraphQL. As we know the staking epoch we can get any block in the epoch
 try:
@@ -113,7 +115,7 @@ for s in staking_ledger["data"]["stakes"]:
         timed_weighting = s["timing"]["timed_weighting"]  # wallet is locked
 
     # only include in the payout addresses if it is unlocked
-    if timed_weighting and float(s["balance"])>=0.5:
+    if timed_weighting and float(s["balance"]) >= 0.5:
         payouts.append({
             "publicKey": s["public_key"],
             "total": 0,
@@ -142,7 +144,7 @@ if len(locked_accounts) > 0:
 else:
     staking_info += f"All of the tokens are unlocked, \n"
 staking_info += f"and the block rewards are shared by the {len(payouts)} accounts " \
-                f"that are either unlocked or have >0.2 MINA balance.\n"
+                f"that are both unlocked and have >0.5 MINA balance.\n"
 print(staking_info)
 f.write(staking_info+"\n")
 
@@ -354,14 +356,14 @@ for p in locked_accounts:
 print(
     tabulate(payout_table,
              headers=[
-                 "PublicKey", "Staking Balance", "Unlocked?",
+                 "PublicKey", "Staking Balance", "Unlocked & >=0.5?",
                  "Payout mina"
              ],
              tablefmt="pretty"))
 f.write(
     tabulate(payout_table,
              headers=[
-                 "PublicKey", "Staking Balance", "Unlocked?",
+                 "PublicKey", "Staking Balance", "Unlocked & >=0.5?",
                  "Payout mina"
              ],
              tablefmt="pretty"))
