@@ -19,11 +19,11 @@ from datetime import datetime
 # Define the payout calculation here, need to be manually input
 ################################################################
 public_key = "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc"  # Public key of the block producer
-staking_epoch = 5  # To ensure we only get blocks from the current staking epoch as the ledger may be different
+staking_epoch = 6  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
 fee = 0.0  # The fee percentage to charge
-min_height = 25560  # This can be the last known payout or this could vary the query to be a starting date
-max_height = 225580
+min_height = 31000  # This can be the last known payout or this could vary the query to be a starting date
+max_height = 33600
 confirmations = 18  # Can set this to any value for min confirmations on the canonical chain. 15 is recommended.
 payout_address = "B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H"
 nonce = int(GraphQL.getNonce(payout_address))
@@ -113,7 +113,7 @@ for s in staking_ledger["data"]["stakes"]:
         timed_weighting = s["timing"]["timed_weighting"]  # wallet is locked
 
     # only include in the payout addresses if it is unlocked
-    if timed_weighting and float(s["balance"])>=0.2:
+    if timed_weighting and float(s["balance"])>=0.5:
         payouts.append({
             "publicKey": s["public_key"],
             "total": 0,
@@ -326,7 +326,7 @@ for p in payouts:
         p["publicKey"],
         Currency.Currency(
             p["staking_balance"],
-            format=Currency.CurrencyFormat.WHOLE).decimal_format(), True, p["total"],
+            format=Currency.CurrencyFormat.WHOLE).decimal_format(), True,
         Currency.Currency(
             p["total"], format=Currency.CurrencyFormat.NANO).decimal_format(),
     ])
@@ -346,7 +346,7 @@ for p in locked_accounts:
         p["publicKey"],
         Currency.Currency(
             p["staking_balance"],
-            format=Currency.CurrencyFormat.WHOLE).decimal_format(), False, p["total"],
+            format=Currency.CurrencyFormat.WHOLE).decimal_format(), False,
         Currency.Currency(
             p["total"], format=Currency.CurrencyFormat.NANO).decimal_format(),
     ])
@@ -354,15 +354,15 @@ for p in locked_accounts:
 print(
     tabulate(payout_table,
              headers=[
-                 "PublicKey", "Staking Balance", "Unlocked?", "Payout nanomina",
-                 "Payout mina", "Foundation"
+                 "PublicKey", "Staking Balance", "Unlocked?",
+                 "Payout mina"
              ],
              tablefmt="pretty"))
 f.write(
     tabulate(payout_table,
              headers=[
-                 "PublicKey", "Staking Balance", "Unlocked?", "Payout nanomina",
-                 "Payout mina", "Foundation"
+                 "PublicKey", "Staking Balance", "Unlocked?",
+                 "Payout mina"
              ],
              tablefmt="pretty"))
 f.write("\n```")
@@ -370,7 +370,6 @@ f.close()
 
 # generate payments commands to be executed elsewhere;
 for cmd in payout_commands:
-    print(cmd)
     g.write(cmd+"\n")
     g.write("sleep 1s \n")
 g.close()
