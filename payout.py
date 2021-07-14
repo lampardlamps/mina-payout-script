@@ -18,12 +18,12 @@ from datetime import datetime
 ################################################################
 # Define the payout calculation here, need to be manually input
 ################################################################
-public_key = "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc"  # Public key of the block producer
-staking_epoch = 6  # To ensure we only get blocks from the current staking epoch as the ledger may be different
+public_key = "B62qq3TQ8AP7MFYPVtMx5tZGF3kWLJukfwG1A1RGvaBW1jfTPTkDBW6"  # Public key of the block producer
+staking_epoch = 7  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
 fee = 0.0  # The fee percentage to charge
-min_height = 31000  # This can be the last known payout or this could vary the query to be a starting date
-max_height = 33600
+min_height = 36835  # should be < min height of the block that your pub_key produced in this epoch
+max_height = 38581  # should be > max height of the block that your pub_key produced in this epoch
 confirmations = 18  # Can set this to any value for min confirmations on the canonical chain. 15 is recommended.
 payout_address = "B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H"
 nonce = int(GraphQL.getNonce(payout_address))
@@ -46,7 +46,7 @@ f.write("```\n")
 
 # payment commands
 g = open(os.getcwd()+'/records/commands.sh', "w")
-g.write("mina accounts import -privkey-path ~/cb_keys/my-wallet\n\n"
+g.write("mina accounts import -privkey-path ~/cb_key/my-wallet\n\n"
         "export SUPERCHARGED_POOL=B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H\n\n"
         "mina accounts unlock -public-key $SUPERCHARGED_POOL \n\n")
 
@@ -344,6 +344,8 @@ for p in payouts:
         # payout_json.append({"publicKey": p["publicKey"], "total": p["total"]})
 
 for p in locked_accounts:
+    if p["staking_balance"] <= 0.001:
+        p["staking_balance"] = 0
     payout_table.append([
         p["publicKey"],
         Currency.Currency(
