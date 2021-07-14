@@ -18,7 +18,7 @@ from datetime import datetime
 ################################################################
 # Define the payout calculation here, need to be manually input
 ################################################################
-public_key = "B62qq3TQ8AP7MFYPVtMx5tZGF3kWLJukfwG1A1RGvaBW1jfTPTkDBW6"  # Public key of the block producer
+public_key = "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc"  # Public key of the block producer
 staking_epoch = 7  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
 fee = 0.0  # The fee percentage to charge
@@ -303,7 +303,7 @@ f.write(f"\nWe have received grand total of "
       f"{Currency.Currency(all_blocks_total_rewards,format=Currency.CurrencyFormat.NANO).decimal_format()} "
       f"mina in this window. \n")
 
-print("Our fee at 0% is " +
+print(f"Our fee at {fee}% is " +
       Currency.Currency(all_blocks_total_fees,
                         format=Currency.CurrencyFormat.NANO).decimal_format() +
       " mina, and the total payout amount is " +
