@@ -303,7 +303,7 @@ f.write(f"\nWe have received grand total of "
       f"{Currency.Currency(all_blocks_total_rewards,format=Currency.CurrencyFormat.NANO).decimal_format()} "
       f"mina in this window. \n")
 
-print(f"Our fee at {fee}% is " +
+print(f"Our fee at {fee*100}% is " +
       Currency.Currency(all_blocks_total_fees,
                         format=Currency.CurrencyFormat.NANO).decimal_format() +
       " mina, and the total payout amount is " +
