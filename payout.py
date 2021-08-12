@@ -322,7 +322,7 @@ f.write("\n")
 # to assert that the currect epoch number is input at the beginning of the programme
 if latest_block["data"]["blocks"][0]["blockHeight"] - max_height > 5000:
     exit('We should be paying for the epoch which has just ended, not a previous one. '
-         'Check your staking epoch values again!!')
+         'Check your staking epoch value again!!')
 
 payout_table = []
 payout_json = []
