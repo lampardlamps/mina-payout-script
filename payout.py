@@ -13,17 +13,18 @@ import GraphQL
 import os
 import math
 from datetime import datetime
+import time
 
 
 ################################################################
 # Define the payout calculation here, need to be manually input
 ################################################################
 public_key = "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc"  # Public key of the block producer
-staking_epoch = 7  # To ensure we only get blocks from the current staking epoch as the ledger may be different
+staking_epoch = 9  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
 fee = 0.0  # The fee percentage to charge
-min_height = 36835  # should be < min height of the block that your pub_key produced in this epoch
-max_height = 38581  # should be > max height of the block that your pub_key produced in this epoch
+if time.time() > 1630454400:
+    fee = 0.025    # fees are 2.5% after 1st Sep
 confirmations = 18  # Can set this to any value for min confirmations on the canonical chain. 15 is recommended.
 payout_address = "B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H"
 nonce = int(GraphQL.getNonce(payout_address))
@@ -73,15 +74,14 @@ if not latest_block:
 
 assert latest_block["data"]["blocks"][0]["blockHeight"] > 1
 
-# Only ever pay out confirmed blocks
-max_height = min(max_height, latest_block["data"]["blocks"][0]["blockHeight"] - confirmations)
-
-assert max_height <= latest_block["data"]["blocks"][0]["blockHeight"]
+# # Only ever pay out confirmed blocks
+# max_height = min(max_height, latest_block["data"]["blocks"][0]["blockHeight"] - confirmations)
+# assert max_height <= latest_block["data"]["blocks"][0]["blockHeight"]
 
 print(
-    f"This script will payout from blocks {min_height} to {max_height} in epoch {staking_epoch}"
+    f"This script will payout from blocks in epoch {staking_epoch}"
 )
-f.write(f"This script will payout from blocks {min_height} to {max_height} in epoch {staking_epoch}\n")
+f.write(f"This script will payout from blocks in epoch {staking_epoch}\n")
 
 # Initialize variables
 total_staking_balance = 0
@@ -156,13 +156,13 @@ try:
     blocks = GraphQL.getBlocks({
         "creator": public_key,
         "epoch": staking_epoch,
-        "blockHeightMin": min_height,
-        "blockHeightMax": max_height,
     })
+    max_height = blocks["data"]["blocks"][0]['blockHeight']
+    assert max_height <= latest_block["data"]["blocks"][0]["blockHeight"]-confirmations
+
 except Exception as e:
     print(e)
     exit("Issue getting blocks from GraphQL")
-
 
 if not blocks["data"]["blocks"]:
     exit("Nothing to payout as we didn't win anything")
@@ -318,6 +318,11 @@ f.write("Our fee at 0% is " +
                         format=Currency.CurrencyFormat.NANO).decimal_format()
       )
 f.write("\n")
+
+# to assert that the currect epoch number is input at the beginning of the programme
+if latest_block["data"]["blocks"][0]["blockHeight"] - max_height > 5000:
+    exit('We should be paying for the epoch which has just ended, not a previous one. '
+         'Check your staking epoch values again!!')
 
 payout_table = []
 payout_json = []
