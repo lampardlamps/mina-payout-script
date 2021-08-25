@@ -47,7 +47,7 @@ f.write("```\n")
 
 # payment commands
 g = open(os.getcwd()+'/records/commands.sh', "w")
-g.write("mina accounts import -privkey-path ~/cb_key/my-wallet\n\n"
+g.write("mina accounts import -privkey-path ~/cb_keys/my-wallet\n\n"
         "export SUPERCHARGED_POOL=B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H\n\n"
         "mina accounts unlock -public-key $SUPERCHARGED_POOL \n\n")
 
@@ -310,14 +310,15 @@ print(f"Our fee at {fee*100}% is " +
       Currency.Currency(all_blocks_total_rewards-all_blocks_total_fees,
                         format=Currency.CurrencyFormat.NANO).decimal_format()
       )
+print(f"\nThe estimated APY before fees is {round((all_blocks_total_rewards/1e9/total_unlocked_staking_balance)*365*24*60*100/(7140*3),2)}%. \n")
 
-f.write("Our fee at 0% is " +
+f.write(f"Our fee at {fee*100}% is " +
       Currency.Currency(all_blocks_total_fees,
                         format=Currency.CurrencyFormat.NANO).decimal_format()+" mina, and the total payout amount is " +
       Currency.Currency(all_blocks_total_rewards-all_blocks_total_fees,
                         format=Currency.CurrencyFormat.NANO).decimal_format()
       )
-f.write("\n")
+f.write(f"\nThe estimated APY before fees is {round((all_blocks_total_rewards/1e9/total_unlocked_staking_balance)*365*24*60*100/(7140*3),2)}%. \n")
 
 # to assert that the currect epoch number is input at the beginning of the programme
 if latest_block["data"]["blocks"][0]["blockHeight"] - max_height > 5000:
