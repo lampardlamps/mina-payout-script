@@ -20,11 +20,11 @@ import time
 # Define the payout calculation here, need to be manually input
 ################################################################
 public_key = "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc"  # Public key of the block producer
-staking_epoch = 11  # To ensure we only get blocks from the current staking epoch as the ledger may be different
+staking_epoch = 12  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
 fee = 0.0  # The fee percentage to charge
-# if time.time() > 1630454400:
-#     fee = 0.025    # fees are 2.5% after 1st Sep
+if time.time() > 1630454400:
+    fee = 0.025    # fees are 2.5% after 1st Sep
 confirmations = 18  # Can set this to any value for min confirmations on the canonical chain. 15 is recommended.
 payout_address = "B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H"
 nonce = int(GraphQL.getNonce(payout_address))
@@ -48,7 +48,7 @@ f.write("```\n")
 
 # payment commands
 g = open(os.getcwd()+f'/records/commands_epoch_{staking_epoch}.sh', "w")
-g.write("bash export.sh\n\n"  # export.sh should contain one line: export CODA_PRIVKEY_PASS=YOUR PRIVKEY PASS
+g.write("export $(cat ~/.mina-env | xargs)\n\n"   # read env for password
         "mina accounts import -privkey-path ~/cb_keys/my-wallet\n\n"
         "export SUPERCHARGED_POOL=B62qmvHQzJmT2rKE1F9RemenGRG8BfXT1Kurve3eT4iC2HMrWiaVG3H\n\n"
         "mina accounts unlock -public-key $SUPERCHARGED_POOL \n\n")
