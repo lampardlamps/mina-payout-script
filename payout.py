@@ -20,7 +20,7 @@ import time
 # Define the payout calculation here, need to be manually input
 ################################################################
 public_key = "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc"  # Public key of the block producer
-staking_epoch = 12  # To ensure we only get blocks from the current staking epoch as the ledger may be different
+staking_epoch = 13  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
 fee = 0.0  # The fee percentage to charge
 if time.time() > 1630454400:
