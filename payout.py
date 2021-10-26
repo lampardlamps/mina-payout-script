@@ -20,7 +20,7 @@ import time
 # Define the payout calculation here, need to be manually input
 ################################################################
 public_key = "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc"  # Public key of the block producer
-staking_epoch = 13  # To ensure we only get blocks from the current staking epoch as the ledger may be different
+staking_epoch = 14  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
 fee = 0.0  # The fee percentage to charge
 if time.time() > 1630454400:
@@ -312,7 +312,8 @@ print(f"Our fee at {fee*100}% is " +
       Currency.Currency(all_blocks_total_rewards-all_blocks_total_fees,
                         format=Currency.CurrencyFormat.NANO).decimal_format()
       )
-print(f"\nThe estimated APY before fees is {round((all_blocks_total_rewards/1e9/total_unlocked_staking_balance)*365*24*60*100/(7140*3),2)}%. \n")
+apy = round((all_blocks_total_rewards/1e9/total_unlocked_staking_balance)*365*24*60*100/(7140*3),2)
+print(f"\nThe estimated APY before fees is {apy}%. \n")
 
 f.write(f"Our fee at {fee*100}% is " +
       Currency.Currency(all_blocks_total_fees,
@@ -320,7 +321,7 @@ f.write(f"Our fee at {fee*100}% is " +
       Currency.Currency(all_blocks_total_rewards-all_blocks_total_fees,
                         format=Currency.CurrencyFormat.NANO).decimal_format()
       )
-f.write(f"\nThe estimated APY before fees is {round((all_blocks_total_rewards/1e9/total_unlocked_staking_balance)*365*24*60*100/(7140*3),2)}%. \n")
+f.write(f"\nThe estimated APY before fees is {apy}%. \n")
 
 # to assert that the currect epoch number is input at the beginning of the programme
 if latest_block["data"]["blocks"][0]["blockHeight"] - max_height > 5000:
@@ -384,5 +385,7 @@ f.close()
 for cmd in payout_commands:
     g.write(cmd+"\n")
     g.write("sleep 1s \n")
+    curNonce = cmd.split('-nonce')[1]
+    g.write(f"current payment with nonce {curNonce} done.\n")
 g.close()
 
