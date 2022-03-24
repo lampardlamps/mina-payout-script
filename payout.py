@@ -20,7 +20,7 @@ import time
 # Define the payout calculation here, need to be manually input
 ################################################################
 public_key = "B62qif7HxYzQCb8v2FN3KgZkS8oevDG2zqYqzkdjSV1Smf6jbEcPVEc"  # Public key of the block producer
-staking_epoch = 23  # To ensure we only get blocks from the current staking epoch as the ledger may be different
+staking_epoch = 24  # To ensure we only get blocks from the current staking epoch as the ledger may be different
 latest_block = False  # If not set will get the latest block from MinaExplorer or fix the latest height here
 fee = 0.0  # The fee percentage to charge
 if time.time() > 1630454400:
@@ -159,6 +159,13 @@ try:
         "creator": public_key,
         "epoch": staking_epoch,
     })
+
+    if not blocks["data"]["blocks"]:
+        no_block_text = "Unfortunately there is nothing to payout this epoch, as we didn't produce any canonical block."
+        f.write(no_block_text)
+        f.close()
+        exit(no_block_text)
+
     max_height = blocks["data"]["blocks"][0]['blockHeight']
     assert max_height <= latest_block["data"]["blocks"][0]["blockHeight"]-confirmations
 
@@ -166,8 +173,7 @@ except Exception as e:
     print(e)
     exit("Issue getting blocks from GraphQL")
 
-if not blocks["data"]["blocks"]:
-    exit("Nothing to payout as we didn't win anything")
+
 
 #  iteration over the blocks to calculate the rewards
 for b in blocks["data"]["blocks"]:
